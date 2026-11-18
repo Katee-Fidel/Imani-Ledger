@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="100 40 380 175">
+  <defs>
+    <linearGradient id="fg-navy-left" gradientUnits="userSpaceOnUse" x1="108" y1="135" x2="269" y2="135">
+      <stop stop-color="#0b142d"/><stop offset="1" stop-color="#152f67"/>
+    </linearGradient>
+    <linearGradient id="fg-navy-right" gradientUnits="userSpaceOnUse" x1="298" y1="135" x2="459" y2="135">
+      <stop stop-color="#0b142d"/><stop offset="1" stop-color="#152f67"/>
+    </linearGradient>
+    <linearGradient id="fg-gold-mark" gradientUnits="userSpaceOnUse" x1="202" y1="135" x2="363" y2="135">
+      <stop stop-color="#e4b745"/><stop offset=".52" stop-color="#dda932"/><stop offset=".81" stop-color="#ffef9a"/><stop offset="1" stop-color="#e6bf59"/>
+    </linearGradient>
+    <clipPath id="fg-gold-overlaps" clipPathUnits="userSpaceOnUse">
+      <path d="M196 94 283 181V218H196Z M283 50H367V171L283 87Z"/>
+    </clipPath>
+  </defs>
+  <g fill="none" stroke-width="35">
+    <path stroke="url(#fg-gold-mark)" d="M265.5 79.5Q283 62 300.5 79.5L338 117Q355.5 134.5 338 152L300.5 189.5Q283 207 265.5 189.5L228 152Q210.5 134.5 228 117Z"/>
+    <path stroke="url(#fg-navy-left)" d="M171 79.5Q188.5 62 206 79.5L243.5 117Q261 134.5 243.5 152L206 189.5Q188.5 207 171 189.5L133.5 152Q116 134.5 133.5 117Z"/>
+    <path stroke="url(#fg-navy-right)" d="M361 79.5Q378.5 62 396 79.5L433.5 117Q451 134.5 433.5 152L396 189.5Q378.5 207 361 189.5L323.5 152Q306 134.5 323.5 117Z"/>
+    <path stroke="url(#fg-gold-mark)" clip-path="url(#fg-gold-overlaps)" d="M265.5 79.5Q283 62 300.5 79.5L338 117Q355.5 134.5 338 152L300.5 189.5Q283 207 265.5 189.5L228 152Q210.5 134.5 228 117Z"/>
+  </g>
+</svg>

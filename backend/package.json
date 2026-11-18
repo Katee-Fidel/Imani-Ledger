@@ -1,0 +1,38 @@
+{
+  "name": "chama-ledger-backend",
+  "version": "1.0.0",
+  "description": "Chama Financial Ledger System - REST API (Express + MongoDB)",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test": "jest --runInBand",
+    "seed:admin": "node src/utils/seedAdmin.js"
+  },
+  "engines": { "node": ">=18" },
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-rate-limit": "^7.4.0",
+    "helmet": "^7.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.5.0",
+    "pdfkit": "^0.15.0",
+    "pino": "^9.3.0",
+    "pino-http": "^10.2.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "mongodb-memory-server": "^10.0.0",
+    "supertest": "^7.0.0"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testTimeout": 30000,
+    "setupFiles": ["<rootDir>/tests/env.js"],
+    "setupFilesAfterEnv": ["<rootDir>/tests/setup.js"]
+  }
+}

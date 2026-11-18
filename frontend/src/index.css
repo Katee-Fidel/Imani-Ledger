@@ -1,0 +1,62 @@
+@import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+@import "tailwindcss";
+
+/* Design tokens, drawn from the Imani Group mark (navy + gold interlocking links). */
+@theme {
+  --color-ink: #0b142d;
+  --color-navy: #152f67;
+  --color-navy-soft: #2a4480;
+  --color-gold: #dda932;
+  --color-gold-deep: #8a6512;
+  --color-paper: #f2f4f8;
+  --color-paper-raised: #ffffff;
+  --color-rule: #d7deea;
+  --color-rust: #b3431e;
+
+  --font-serif: "Source Serif 4", Georgia, serif;
+  --font-sans: "IBM Plex Sans", system-ui, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-paper: #0f1626;
+    --color-paper-raised: #141d33;
+    --color-rule: #2a3550;
+    --color-ink: #eef1f7;
+  }
+}
+:root[data-theme="dark"] {
+  --color-paper: #0f1626;
+  --color-paper-raised: #141d33;
+  --color-rule: #2a3550;
+  --color-ink: #eef1f7;
+}
+
+html {
+  color-scheme: light dark;
+}
+
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Tabular figures everywhere money or dates appear in a table. */
+.ledger-figures {
+  font-variant-numeric: tabular-nums;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-gold-deep);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
