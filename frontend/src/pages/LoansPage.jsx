@@ -13,7 +13,9 @@ export default function LoansPage() {
 
   const load = () => api.get('/loans').then(setLoans).catch((err) => setError(err.message));
 
-  useEffect(load, []);
+  useEffect(() => {
+    load();
+  }, []);
 
   const disburse = async (id) => {
     setBusyId(id);

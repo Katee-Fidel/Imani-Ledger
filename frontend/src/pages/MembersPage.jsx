@@ -16,7 +16,9 @@ export default function MembersPage() {
 
   const load = () => api.get('/users').then(setMembers).catch((err) => setError(err.message));
 
-  useEffect(load, []);
+  useEffect(() => {
+    load();
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
