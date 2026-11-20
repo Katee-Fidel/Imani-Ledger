@@ -17,23 +17,33 @@
   --font-sans: "IBM Plex Sans", system-ui, sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --color-paper: #0f1626;
-    --color-paper-raised: #141d33;
-    --color-rule: #2a3550;
-    --color-ink: #eef1f7;
-  }
+/* Light is the default and the only automatic choice — the system color
+   scheme never switches this on its own (that was the earlier bug). Dark is
+   available only as an explicit, opt-in preference set from the Profile
+   page, which toggles this attribute on <html>. */
+html {
+  color-scheme: light;
 }
-:root[data-theme="dark"] {
-  --color-paper: #0f1626;
-  --color-paper-raised: #141d33;
-  --color-rule: #2a3550;
+html[data-theme='dark'] {
+  color-scheme: dark;
   --color-ink: #eef1f7;
+  /* A little lighter than a true near-black, so things sitting on top
+     (buttons, links, borders) have room to stand out on their own. */
+  --color-paper: #171f33;
+  --color-paper-raised: #212b45;
+  --color-rule: #3a4668;
+  /* These two are used as accent text/buttons everywhere (links, "Sign
+     out", focus rings) — the fixed brand-navy and brand-gold are too close
+     in value to the dark background to read. Lightened here only; the
+     logo SVGs use their own hardcoded colors and are unaffected. */
+  --color-navy: #9db4e8;
+  --color-gold-deep: #e8c876;
 }
 
-html {
-  color-scheme: light dark;
+/* Matches the login page's halo treatment, scoped to dark mode only — in
+   light mode the mark already has enough contrast on its own. */
+html[data-theme='dark'] .brand-glow {
+  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.45)) drop-shadow(0 0 10px rgba(255, 255, 255, 0.25));
 }
 
 body {

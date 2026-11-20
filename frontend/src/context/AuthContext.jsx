@@ -30,8 +30,14 @@ export function AuthProvider({ children }) {
     setUser(null);
   };
 
+  // Merges a partial profile update (e.g. from the Profile page) into the
+  // signed-in user without a round trip back through /auth/me.
+  const updateUser = (patch) => setUser((prev) => ({ ...prev, ...patch }));
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>{children}</AuthContext.Provider>
+    <AuthContext.Provider value={{ user, loading, login, logout, updateUser }}>
+      {children}
+    </AuthContext.Provider>
   );
 }
 

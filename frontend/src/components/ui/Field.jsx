@@ -1,6 +1,6 @@
 export default function Field({ label, error, children }) {
   return (
-    <label className="flex flex-col gap-1.5 text-sm">
+    <label className="flex flex-col gap-2 text-base">
       <span className="text-ink/80">{label}</span>
       {children}
       {error && <span className="text-rust text-xs">{error}</span>}
@@ -9,7 +9,7 @@ export default function Field({ label, error, children }) {
 }
 
 export function inputClass(hasError) {
-  return `border px-3 py-2 bg-paper-raised text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-deep ${
+  return `border px-4 py-3 text-base bg-paper-raised text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-deep ${
     hasError ? 'border-rust' : 'border-rule'
   }`;
 }

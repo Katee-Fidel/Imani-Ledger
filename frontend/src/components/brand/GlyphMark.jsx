@@ -1,8 +1,9 @@
 // Just the three interlocking links, cropped from the full lockup — used small,
-// in the topbar, where the wordmark is set in type instead.
-export default function GlyphMark({ className = '' }) {
+// in the topbar, where the wordmark is set in type instead. Always the true
+// brand colors — never recolored for a background.
+export default function GlyphMark({ className = '', style }) {
   return (
-    <svg viewBox="100 40 380 175" className={className} role="img" aria-labelledby="imani-glyph-title">
+    <svg viewBox="100 40 380 175" className={className} style={style} role="img" aria-labelledby="imani-glyph-title">
       <title id="imani-glyph-title">Imani Group mark</title>
       <defs>
         <linearGradient id="g-navy-left" gradientUnits="userSpaceOnUse" x1="108" y1="135" x2="269" y2="135">

@@ -4,10 +4,15 @@ const variants = {
   ghost: 'bg-transparent text-navy border border-rule hover:border-navy',
 };
 
-export default function Button({ variant = 'primary', className = '', ...props }) {
+const sizes = {
+  md: 'px-4 py-2 text-sm',
+  lg: 'px-6 py-3 text-base',
+};
+
+export default function Button({ variant = 'primary', size = 'md', className = '', ...props }) {
   return (
     <button
-      className={`px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${variants[variant]} ${className}`}
+      className={`font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${sizes[size]} ${variants[variant]} ${className}`}
       {...props}
     />
   );
