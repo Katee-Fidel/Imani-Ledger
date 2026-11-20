@@ -5,8 +5,10 @@ import GlyphMark from './brand/GlyphMark';
 import Avatar from './ui/Avatar';
 
 const tabClass = ({ isActive }) =>
-  `px-1 py-3 text-sm border-b-2 transition-colors ${
-    isActive ? 'border-gold text-ink' : 'border-transparent text-ink/60 hover:text-ink'
+  `px-3 py-3 text-sm rounded-t-sm border-b-[3px] transition-colors ${
+    isActive
+      ? 'font-semibold border-gold text-ink'
+      : 'font-medium border-transparent text-ink/70 hover:text-ink hover:bg-navy/5'
   }`;
 
 export default function AppLayout() {
@@ -35,7 +37,7 @@ export default function AppLayout() {
             </button>
           </div>
         </div>
-        <nav className="max-w-6xl mx-auto px-6 flex gap-6 border-t border-rule">
+        <nav className="max-w-6xl mx-auto px-6 flex gap-1 border-t border-rule">
           <NavLink to="/" end className={tabClass}>
             Ledger
           </NavLink>
