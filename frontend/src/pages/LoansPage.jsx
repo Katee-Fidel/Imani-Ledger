@@ -139,10 +139,12 @@ export default function LoansPage() {
           <table className="w-full text-sm ledger-figures">
             <thead>
               <tr className="text-left text-ink/60 border-b border-rule">
+                <th className="py-2 pr-4 font-normal">Member</th>
                 <th className="py-2 pr-4 font-normal">Principal</th>
                 <th className="py-2 pr-4 font-normal">Type</th>
                 <th className="py-2 pr-4 font-normal">Total payable</th>
                 <th className="py-2 pr-4 font-normal">Paid</th>
+                <th className="py-2 pr-4 font-normal">Disbursed</th>
                 <th className="py-2 pr-4 font-normal">Due</th>
                 <th className="py-2 pr-4 font-normal">Status</th>
                 {user?.role === 'admin' && <th className="py-2 pr-4 font-normal" />}
@@ -151,10 +153,12 @@ export default function LoansPage() {
             <tbody>
               {loans.map((loan) => (
                 <tr key={loan._id} className="border-b border-rule">
+                  <td className="py-2 pr-4">{loan.userId?.fullName || '—'}</td>
                   <td className="py-2 pr-4">{formatKES(loan.principalAmount)}</td>
                   <td className="py-2 pr-4 capitalize">{loan.loanType}</td>
                   <td className="py-2 pr-4">{formatKES(loan.totalPayable)}</td>
                   <td className="py-2 pr-4">{formatKES(loan.amountPaid)}</td>
+                  <td className="py-2 pr-4">{loan.disbursedDate ? formatDate(loan.disbursedDate) : '—'}</td>
                   <td className="py-2 pr-4">{loan.dueDate ? formatDate(loan.dueDate) : '—'}</td>
                   <td className="py-2 pr-4 capitalize">{loan.status}</td>
                   {user?.role === 'admin' && (

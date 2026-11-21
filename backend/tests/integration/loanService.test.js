@@ -83,3 +83,28 @@ describe('loanService — disbursement and repayment guards', () => {
     expect(updated.amountPaid).toBe(toCents(4000));
   });
 });
+
+describe('loanService.listLoans — transparency of whose loan is whose', () => {
+  test('includes the borrower\'s name, not their full account', async () => {
+    const member = await createMember({ fullName: 'Asha Kiptoo', email: 'asha@example.com' });
+    await loanService.createLoan({ userId: member._id, principalAmount: 5000, loanType: 'emergency' });
+
+    const [loan] = await loanService.listLoans({});
+
+    expect(loan.userId.fullName).toBe('Asha Kiptoo');
+    expect(loan.userId.email).toBeUndefined();
+  });
+
+  test('disbursing a loan still works end to end when the list path populates userId', async () => {
+    // Regression guard: disburseLoan/applyRepayment use getLoanById (left
+    // unpopulated on purpose) so loan.userId stays a plain ObjectId when
+    // handed to Transaction.create — only listLoans populates it for display.
+    const member = await createMember();
+    const loan = await loanService.createLoan({ userId: member._id, principalAmount: 5000, loanType: 'emergency' });
+    await loanService.disburseLoan(loan._id);
+
+    const [listed] = await loanService.listLoans({ _id: loan._id });
+    expect(listed.status).toBe('disbursed');
+    expect(String(listed.userId._id)).toBe(String(member._id));
+  });
+});

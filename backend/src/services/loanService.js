@@ -33,7 +33,12 @@ exports.createLoan = async ({ userId, principalAmount, loanType }) => {
   });
 };
 
-exports.listLoans = async (filter) => Loan.find(filter).sort({ createdAt: -1 });
+// FR-AUTH-003: the loan book is globally visible, so every row names its
+// borrower — only `fullName`, not the rest of their account, and only here
+// on the read path (disburseLoan/applyRepayment use getLoanById unpopulated,
+// since they pass userId on to Transaction.create and must not get back a
+// populated sub-document in its place).
+exports.listLoans = async (filter) => Loan.find(filter).sort({ createdAt: -1 }).populate('userId', 'fullName');
 
 exports.getLoanById = async (id, session) => {
   const loan = await Loan.findById(id).session(session || null);
