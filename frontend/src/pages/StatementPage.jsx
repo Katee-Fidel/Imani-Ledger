@@ -2,19 +2,29 @@ import { useEffect, useState } from 'react';
 import { api, getToken } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import EmptyState from '../components/ui/EmptyState';
+import StatFigure from '../components/ui/StatFigure';
 import Button from '../components/ui/Button';
 import { formatKES, formatDate, formatType } from '../lib/format';
+
+// Same set LedgerPage.jsx uses for the group-wide pool total — these are the
+// only entry types that represent the member's own money going IN. A loan
+// disbursement is money the Chama pays OUT to them (a debt, not equity), so
+// it must never be summed alongside contributions into one "balance".
+const CONTRIBUTION_TYPES = ['shares_savings', 'christmas_contrib', 'retreat_contrib', 'office_contrib', 'sitting_allowance'];
 
 export default function StatementPage() {
   const { user } = useAuth();
   const [transactions, setTransactions] = useState(null);
+  const [loans, setLoans] = useState([]);
   const [error, setError] = useState('');
   const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
-    api
-      .get(`/transactions?userId=${user.id}`)
-      .then((page) => setTransactions(page.items))
+    Promise.all([api.get(`/transactions?userId=${user.id}`), api.get(`/loans?userId=${user.id}`)])
+      .then(([page, loanList]) => {
+        setTransactions(page.items);
+        setLoans(loanList);
+      })
       .catch((err) => setError(err.message));
   }, [user.id]);
 
@@ -42,15 +52,23 @@ export default function StatementPage() {
   if (error) return <EmptyState title="Your statement didn't load" body={error} />;
   if (!transactions) return null;
 
-  const balance = transactions.filter((t) => t.status === 'active').reduce((sum, t) => sum + t.amount, 0);
+  const active = transactions.filter((t) => t.status === 'active');
+  const contributionsBalance = active
+    .filter((t) => CONTRIBUTION_TYPES.includes(t.type))
+    .reduce((sum, t) => sum + t.amount, 0);
+  const finesCharged = active.filter((t) => t.type.startsWith('fine_')).reduce((sum, t) => sum + t.amount, 0);
+  const outstandingLoans = loans
+    .filter((l) => l.status === 'disbursed')
+    .reduce((sum, l) => sum + (l.totalPayable - l.amountPaid), 0);
 
   return (
     <div className="flex flex-col gap-8">
-      <div className="flex items-center justify-between border-b border-rule pb-6">
-        <div>
-          <p className="text-sm text-ink/60">Net balance</p>
-          <p className="font-serif text-3xl ledger-figures text-ink">{formatKES(balance)}</p>
-        </div>
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-6 border-b border-rule pb-6">
+        <section className="grid grid-cols-1 sm:grid-cols-3 gap-8">
+          <StatFigure label="Contributions balance" value={formatKES(contributionsBalance)} />
+          <StatFigure label="Outstanding loans" value={formatKES(outstandingLoans)} tone="rust" />
+          <StatFigure label="Fines charged" value={formatKES(finesCharged)} tone="rust" />
+        </section>
         <Button variant="gold" onClick={downloadPdf} disabled={downloading}>
           {downloading ? 'Preparing…' : 'Download statement'}
         </Button>
