@@ -5,11 +5,11 @@
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
-    "dev": "node --watch src/server.js",
+    "dev": "node --watch-path=src src/server.js",
     "test": "jest --runInBand",
     "seed:admin": "node src/utils/seedAdmin.js"
   },
-  "engines": { "node": ">=18" },
+  "engines": { "node": ">=20" },
   "dependencies": {
     "bcrypt": "^6.0.0",
     "cors": "^2.8.5",

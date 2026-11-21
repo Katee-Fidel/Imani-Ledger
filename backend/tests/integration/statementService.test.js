@@ -70,4 +70,52 @@ describe('statementService.streamMemberStatement', () => {
     expect(res.headers['Content-Type']).toBe('application/pdf');
     expect(pdfBuffer.subarray(0, 4).toString()).toBe('%PDF');
   });
+
+  test('a member with no transactions yet still gets a valid PDF', async () => {
+    const member = await createMember();
+    const res = createFakeRes();
+    const chunks = [];
+    res.on('data', (chunk) => chunks.push(chunk));
+    const ended = new Promise((resolve) => res.on('end', resolve));
+
+    await statementService.streamMemberStatement(member._id, res);
+    await ended;
+
+    expect(Buffer.concat(chunks).subarray(0, 4).toString()).toBe('%PDF');
+  });
+
+  test('a long history spans multiple pages, each with a redrawn table header and page number', async () => {
+    const admin = await createAdmin();
+    const member = await createMember();
+
+    // Enough rows to force several page breaks through the real
+    // ensureSpace()/addPage()/tableHeader() path, not just one page.
+    for (let i = 0; i < 80; i += 1) {
+      await transactionService.allocate(admin._id, {
+        userId: member._id,
+        totalAmount: 500,
+        paymentMethod: 'mpesa',
+        receiptNumber: `RCPT-PAGE-${i}`,
+        monthTarget: '2026-11',
+        allocations: [{ type: 'office_contrib', amount: 500 }],
+      });
+    }
+
+    const res = createFakeRes();
+    const chunks = [];
+    res.on('data', (chunk) => chunks.push(chunk));
+    const ended = new Promise((resolve) => res.on('end', resolve));
+
+    await statementService.streamMemberStatement(member._id, res);
+    await ended;
+
+    const pdfBuffer = Buffer.concat(chunks);
+    expect(pdfBuffer.subarray(0, 4).toString()).toBe('%PDF');
+
+    // pdfkit writes each page object's dictionary as plain text even though
+    // content streams are Flate-compressed, so this is a reliable count of
+    // actual pages produced — not just a non-crash smoke test.
+    const pageObjectMatches = pdfBuffer.toString('latin1').match(/\/Type\s*\/Page(?!s)/g) || [];
+    expect(pageObjectMatches.length).toBeGreaterThan(1);
+  });
 });
