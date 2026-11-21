@@ -1,13 +1,12 @@
 import { useRef, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../api/client';
-import { getAvatar, setAvatar, removeAvatar } from '../lib/avatar';
 import { getTheme, setTheme } from '../lib/theme';
 import Avatar from '../components/ui/Avatar';
 import Field, { inputClass } from '../components/ui/Field';
 import Button from '../components/ui/Button';
 
-const MAX_PHOTO_BYTES = 1.5 * 1024 * 1024;
+const MAX_PHOTO_BYTES = 5 * 1024 * 1024; // server resizes it down; this just avoids a pointless big upload
 
 export default function ProfilePage() {
   const { user, updateUser } = useAuth();
@@ -15,34 +14,45 @@ export default function ProfilePage() {
 
   const [fullName, setFullName] = useState(user.fullName);
   const [phoneNumber, setPhoneNumber] = useState(user.phoneNumber || '');
-  const [photo, setPhoto] = useState(() => getAvatar(user.id));
   const [theme, setThemeState] = useState(getTheme);
   const [error, setError] = useState('');
   const [photoError, setPhotoError] = useState('');
   const [success, setSuccess] = useState('');
   const [saving, setSaving] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
-  const handlePhotoChange = (e) => {
+  const handlePhotoChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setPhotoError('');
 
     if (file.size > MAX_PHOTO_BYTES) {
-      setPhotoError('That photo is too large — please use one under 1.5 MB.');
+      setPhotoError('That photo is too large — please use one under 5 MB.');
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      setPhoto(reader.result);
-      setAvatar(user.id, reader.result);
-    };
-    reader.readAsDataURL(file);
+    setUploadingPhoto(true);
+    try {
+      const formData = new FormData();
+      formData.append('photo', file);
+      const updated = await api.upload('/users/me/avatar', formData);
+      updateUser(updated);
+    } catch (err) {
+      setPhotoError(err.message);
+    } finally {
+      setUploadingPhoto(false);
+      e.target.value = '';
+    }
   };
 
-  const handleRemovePhoto = () => {
-    setPhoto(null);
-    removeAvatar(user.id);
+  const handleRemovePhoto = async () => {
+    setPhotoError('');
+    try {
+      const updated = await api.delete('/users/me/avatar');
+      updateUser(updated);
+    } catch (err) {
+      setPhotoError(err.message);
+    }
   };
 
   const handleThemeChange = (next) => {
@@ -59,11 +69,8 @@ export default function ProfilePage() {
       const updated = await api.patch('/users/me', { fullName, phoneNumber });
       updateUser(updated);
       setSuccess('Profile updated.');
-    } catch {
-      // The backend doesn't support self-service profile edits yet
-      // (tracked in TODO.md) — say so plainly instead of surfacing a
-      // raw "route not found" error.
-      setError("We can't save name or phone number changes yet — that part of the server isn't built. Theme and photo are saved on this device already.");
+    } catch (err) {
+      setError(err.message);
     } finally {
       setSaving(false);
     }
@@ -77,13 +84,18 @@ export default function ProfilePage() {
       </div>
 
       <section className="flex items-center gap-5 border-b border-rule pb-8">
-        <Avatar src={photo} name={fullName} size={72} />
+        <Avatar src={user.avatarUrl} name={fullName} size={72} />
         <div className="flex flex-col gap-2">
           <div className="flex gap-3">
-            <Button type="button" variant="ghost" onClick={() => fileInputRef.current?.click()}>
-              {photo ? 'Change photo' : 'Add a photo'}
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploadingPhoto}
+            >
+              {uploadingPhoto ? 'Uploading…' : user.avatarUrl ? 'Change photo' : 'Add a photo'}
             </Button>
-            {photo && (
+            {user.avatarUrl && (
               <button type="button" onClick={handleRemovePhoto} className="text-sm text-ink/50 hover:text-rust">
                 Remove
               </button>

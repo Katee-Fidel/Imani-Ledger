@@ -14,6 +14,12 @@ export default function MembersPage() {
   const [success, setSuccess] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
+  const [resetFor, setResetFor] = useState(null);
+  const [resetPassword, setResetPassword] = useState('');
+  const [resetError, setResetError] = useState('');
+  const [resetSuccess, setResetSuccess] = useState('');
+  const [resetting, setResetting] = useState(false);
+
   const load = () => api.get('/users').then(setMembers).catch((err) => setError(err.message));
 
   useEffect(() => {
@@ -37,6 +43,30 @@ export default function MembersPage() {
     }
   };
 
+  const openReset = (id) => {
+    setResetFor(id);
+    setResetPassword('');
+    setResetError('');
+    setResetSuccess('');
+  };
+
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+    setResetError('');
+    setResetting(true);
+    try {
+      await api.patch(`/users/${resetFor}/password`, { newPassword: resetPassword });
+      setResetSuccess('Password reset. They must set a new one the next time they sign in.');
+      setResetFor(null);
+    } catch (err) {
+      setResetError(err.message);
+    } finally {
+      setResetting(false);
+    }
+  };
+
+  const resetTarget = members?.find((m) => m._id === resetFor);
+
   return (
     <div className="flex flex-col gap-10">
       <section>
@@ -51,6 +81,7 @@ export default function MembersPage() {
                 <th className="py-2 pr-4 font-normal">Role</th>
                 <th className="py-2 pr-4 font-normal">Status</th>
                 <th className="py-2 pr-4 font-normal">Joined</th>
+                <th className="py-2 pr-4 font-normal" />
               </tr>
             </thead>
             <tbody>
@@ -60,12 +91,51 @@ export default function MembersPage() {
                   <td className="py-2 pr-4 capitalize">{m.role}</td>
                   <td className="py-2 pr-4 capitalize">{m.status}</td>
                   <td className="py-2 pr-4">{formatDate(m.joinedDate)}</td>
+                  <td className="py-2 pr-4">
+                    <Button variant="ghost" onClick={() => openReset(m._id)}>
+                      Reset password
+                    </Button>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         )}
+        {resetSuccess && <p className="mt-4 text-sm text-navy border-l-2 border-gold pl-3">{resetSuccess}</p>}
       </section>
+
+      {resetTarget && (
+        <section className="max-w-md border-t border-rule pt-8">
+          <h2 className="font-serif text-lg text-ink mb-1">Reset password for {resetTarget.fullName}</h2>
+          <p className="text-sm text-ink/60 mb-4">
+            They'll sign in with this temporary password, then be asked to set their own before
+            doing anything else.
+          </p>
+          <form onSubmit={handleResetPassword} className="flex flex-col gap-4">
+            <Field label="Temporary password">
+              <input
+                type="password"
+                required
+                minLength={8}
+                value={resetPassword}
+                onChange={(e) => setResetPassword(e.target.value)}
+                className={inputClass(false)}
+              />
+            </Field>
+
+            {resetError && <p role="alert" className="text-sm text-rust border-l-2 border-rust pl-3">{resetError}</p>}
+
+            <div className="flex gap-3">
+              <Button type="submit" disabled={resetting}>
+                {resetting ? 'Resetting…' : 'Reset password'}
+              </Button>
+              <Button type="button" variant="ghost" onClick={() => setResetFor(null)}>
+                Cancel
+              </Button>
+            </div>
+          </form>
+        </section>
+      )}
 
       <section className="max-w-md border-t border-rule pt-8">
         <h2 className="font-serif text-lg text-ink mb-1">Add a member</h2>

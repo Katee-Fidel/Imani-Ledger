@@ -17,6 +17,20 @@ exports.authenticate = asyncHandler(async (req, _res, next) => {
   const user = await User.findById(payload.id);
   if (!user) throw new UnauthorizedError('Invalid or expired token');
   if (user.status !== 'active') throw new ForbiddenError('Account is not active');
+
+  // A password reset by an admin locks the account to just these two routes
+  // until the user sets their own password — enforced here, not only in the
+  // frontend's routing, since this is a security boundary.
+  // req.originalUrl (not req.path) because this middleware runs inside a
+  // sub-router, where req.path is only relative to that router's mount point.
+  const fullPath = req.originalUrl.split('?')[0];
+  const isAllowedWhileLocked =
+    (req.method === 'GET' && fullPath === '/api/auth/me') ||
+    (req.method === 'PATCH' && fullPath === '/api/users/me/password');
+  if (user.mustChangePassword && !isAllowedWhileLocked) {
+    throw new ForbiddenError('You must set a new password before continuing');
+  }
+
   req.user = user;
   next();
 });

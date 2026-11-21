@@ -3,52 +3,60 @@
 Running list: as we build out the UI/UX first, anything the frontend assumes exists on the
 backend but doesn't yet gets logged here. Work through these once the UI pass is done.
 
+## ⚠️ Before deploying to Render + Vercel
+
+Found while wiring the avatar feature, and it affects `/api` calls too, not just avatars:
+
+- **The frontend calls everything with relative paths** (`fetch('/api/...')`, and now
+  `<img src="/uploads/...">`). That only works because `vite.config.js`'s dev proxy forwards both
+  `/api` and `/uploads` to `localhost:5000`. In production, the frontend (Vercel) and backend
+  (Render) are **different domains** — there is no dev proxy there, so every API call and every
+  avatar image will silently 404/fail once deployed, unless one of these is set up first:
+  - **Vercel rewrites** (`vercel.json`, `rewrites` pointing `/api/*` and `/uploads/*` at the
+    Render backend's URL) — keeps the frontend code unchanged, closest to how dev works now.
+  - **Absolute backend URL** — add a `VITE_API_BASE_URL` build-time env var, prefix every fetch in
+    `frontend/src/api/client.js` with it (and the `<img>` src wherever `avatarUrl` is rendered).
+  - Either way, `backend/src/config/index.js`'s `corsOrigin` will need to be the deployed Vercel
+    URL, not `localhost:5173`, once that's live.
+  - This hasn't been fixed yet — flagging now so it's not discovered the hard way after deploy.
+
 ## From the login page
 
-- **Admin-initiated password reset.** `ForgotPasswordPage` tells members to ask their admin to
-  set a new password, but there is no backend support for that yet. `userService`/`userController`
-  only expose `setStatus`. Needs:
-  - `PATCH /api/users/:id/password` (admin-only) — sets a new password for another user, hashed
-    with the same bcrypt cost as registration. No current-password check needed (admin privilege
-    already gates this), but should probably force the member to change it again on next login
-    (would need a `mustChangePassword` flag on `User` if we want that — not decided yet).
-  - Corresponding `userService.setPassword(id, newPassword)` + Zod validator + frontend form in
-    the Members page (an admin-triggered "Reset password" action per row, likely a small
-    modal/inline form rather than a separate page).
+- ~~**Admin-initiated password reset**~~ — done. `PATCH /api/users/:id/password` (admin-only)
+  hashes and sets a new password for another user, and sets `mustChangePassword: true`. The
+  server itself enforces the lock afterward (`middleware/auth.js`): that account can only hit
+  `GET /api/auth/me` or `PATCH /api/users/me/password` until they set their own password — this
+  is checked server-side, not just in the frontend's routing. Frontend: Members page has a
+  "Reset password" action per row; a new `/change-password` screen (gated via `ProtectedRoute`)
+  handles the forced change. Covered by `tests/integration/profileAndAvatar.test.js`.
 
-- **Self-service email-based reset** — explicitly *not* building this yet (no email-sending
+- **Self-service email-based reset** — still explicitly *not* building this (no email-sending
   infrastructure exists, and `CON-SEC-001` already keeps onboarding admin-driven). Only revisit
-  if the user asks for real self-service reset; it would need a reset-token model/field, an email
-  provider integration, and two new endpoints (`request-reset`, `reset-with-token`).
+  if the user asks for real self-service reset.
 
-## From the Profile page (new: name, phone, photo, theme preference)
+## From the Profile page
 
-- **Self-service profile update.** `ProfilePage` calls `PATCH /api/users/me` to save `fullName`
-  and `phoneNumber`, but that route doesn't exist — only admin-driven `setStatus` does right now.
-  It currently fails gracefully (friendly in-app message, no crash), but needs:
-  - `PATCH /api/users/me` (any authenticated user, acting on themselves — no admin check, just
-    `req.user._id`) — update own `fullName`/`phoneNumber` only. Needs its own Zod schema (reuse
-    shape from `userValidators`, but scoped to these two fields — must NOT allow `role`/`status`/
-    `email` changes through this endpoint).
-  - `userService.updateOwnProfile(id, { fullName, phoneNumber })`.
-  - Decide whether email changes are ever allowed self-service (currently: no, by design — email
-    is the login identifier, left read-only in the UI).
+- ~~**Self-service profile update**~~ — done. `PATCH /api/users/me` updates `fullName`/
+  `phoneNumber` only (role/status/email can't go through this endpoint, by design — email stays
+  the read-only login identifier).
 
-- **Profile photo storage.** Currently stored client-side only (`localStorage`, per browser,
-  via `frontend/src/lib/avatar.js`) — so it won't show up for other members viewing someone's
-  profile, and won't follow a user to a different device/browser. Needs a real decision before
-  this is "done":
-  - Where files live: options are a `User.avatarUrl` field + object storage (S3/Cloudinary/etc.),
-    or storing a size-capped image directly on the `User` document (simplest, but bloats the doc
-    and isn't great practice for binary data in Mongo).
-  - `POST /api/users/me/avatar` (multipart upload) or accept a pre-uploaded URL, depending on the
-    storage choice above.
-  - Whether member-directory views (`GET /api/users`) should include the avatar URL in their
-    projection once this exists.
+- ~~**Profile photo storage**~~ — done, via local disk rather than the base64-on-document option
+  floated earlier (cleaner — keeps `User` documents and `GET /api/users` light). Uploads go
+  through `multer` (memory storage, 5MB cap, image-mimetype filter) → `sharp` (resize to 256×256,
+  re-encode to `webp` — this is also what actually validates the upload really is an image, not
+  just a faked extension/MIME type) → written to `backend/public/uploads/avatars/<userId>.webp`,
+  one fixed file per user so a re-upload just overwrites it. Served via `express.static` mounted
+  at `/uploads` (that one subfolder only, not all of `public/`). `User.avatarUpdatedAt` both marks
+  "has a photo" and cache-busts the URL (`?v=<timestamp>`) so a re-upload doesn't keep showing a
+  browser-cached old image — the same bug we hit with the favicon earlier. `GET /api/users` now
+  includes `avatarUrl` in both the admin and member projections.
+  - **Known caveat, not yet resolved**: local disk storage only persists if the Render service has
+    a paid persistent disk attached. On Render's free tier (no disk), every uploaded avatar is
+    lost on the next deploy or restart. Revisit if that turns out to matter for this MVP — the fix
+    would be moving to object storage (S3/Cloudinary/etc.) later; the service boundary
+    (`avatarService.js`) was written so that swap wouldn't touch the controller/routes.
 
-- **Theme preference** needs no backend work — it's `localStorage`-only on purpose (a per-device
-  display preference, not shared state), toggled from the Profile page. Not a gap, just noting it
-  so it isn't mistaken for one later.
+- **Theme preference** needs no backend work — `localStorage`-only on purpose, unchanged.
 
 ## Known frontend/backend gaps carried over from earlier (not new, just tracked here now)
 

@@ -1,6 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { getAvatar } from '../lib/avatar';
 import GlyphMark from './brand/GlyphMark';
 import Avatar from './ui/Avatar';
 
@@ -30,7 +29,7 @@ export default function AppLayout() {
                   {user?.role}
                 </span>
               </div>
-              <Avatar src={user ? getAvatar(user.id) : null} name={user?.fullName} size={48} />
+              <Avatar src={user?.avatarUrl} name={user?.fullName} size={48} />
             </NavLink>
             <button onClick={logout} className="text-sm text-navy hover:text-gold-deep">
               Sign out

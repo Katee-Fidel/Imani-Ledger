@@ -10,6 +10,7 @@ import StatementPage from './pages/StatementPage';
 import AllocatePaymentPage from './pages/AllocatePaymentPage';
 import MembersPage from './pages/MembersPage';
 import ProfilePage from './pages/ProfilePage';
+import ChangePasswordPage from './pages/ChangePasswordPage';
 
 export default function App() {
   return (
@@ -18,6 +19,7 @@ export default function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route element={<ProtectedRoute />}>
+          <Route path="/change-password" element={<ChangePasswordPage />} />
           <Route element={<AppLayout />}>
             <Route path="/" element={<LedgerPage />} />
             <Route path="/loans" element={<LoansPage />} />

@@ -1,3 +1,5 @@
 node_modules
 .env
 coverage
+public/uploads/avatars/*
+!public/uploads/avatars/.gitkeep

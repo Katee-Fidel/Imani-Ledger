@@ -2,6 +2,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const config = require('../config');
 const User = require('../models/User');
+const { avatarUrl } = require('../utils/avatarUrl');
 const { UnauthorizedError, BadRequestError } = require('../utils/errors');
 
 const sign = (user) => jwt.sign({ id: user._id }, config.jwtSecret, { expiresIn: config.jwtExpiresIn });
@@ -14,6 +15,8 @@ const toProfile = (user) => ({
   role: user.role,
   status: user.status,
   joinedDate: user.joinedDate,
+  mustChangePassword: user.mustChangePassword,
+  avatarUrl: avatarUrl(user),
 });
 
 // FR-AUTH-001
